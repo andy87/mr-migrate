@@ -1,2 +1,2 @@
-# mr-migrate
+# mrMigrate
 service migrate generator
