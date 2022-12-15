@@ -1,4 +1,4 @@
-let mrMigrate = {};
+window.mrMigrate = {};
 
 (function()
 {
@@ -15,8 +15,9 @@ let mrMigrate = {};
         TYPE_INT = 'int',
         TYPE_STRING = 'string';
 
+    let _ = window.mrMigrate;
 
-    mrMigrate = {
+    _ = {
 
         DB : DB,
         TABLE : TABLE,
@@ -41,21 +42,21 @@ let mrMigrate = {};
             TYPE_PRIMARY_KEY : {
                 name : "id",
                 comment : "айди",
-                type : mrMigrate.TYPE_INT,
+                type : _.TYPE_INT,
                 autoincrement : true,
                 nullable : false
             },
             TYPE_CREATED : {
                 name : "created_at",
                 comment : "дата создания",
-                type : mrMigrate.TYPE_DATETIME,
+                type : _.TYPE_DATETIME,
                 autoincrement : false,
                 nullable : false
             },
             TYPE_UPDATED : {
                 name : "updated_at",
                 comment : "дата редактирования",
-                type : mrMigrate.TYPE_DATETIME,
+                type : _.TYPE_DATETIME,
                 autoincrement : false,
                 nullable : true
             }
@@ -65,7 +66,7 @@ let mrMigrate = {};
             {
                 _upgrade: function (type, name, params)
                 {
-                    let template = mrMigrate.template[type];
+                    let template = _.template[type];
 
                     template['name'] = name;
 
@@ -78,9 +79,9 @@ let mrMigrate = {};
 
                 db: function (name, params)
                 {
-                    mrMigrate.db[name] = this._upgrade( DB, name, params );
+                    _.db[name] = this._upgrade( DB, name, params );
 
-                    return mrMigrate.db[name];
+                    return _.db[name];
                 },
 
                 table: function (db, name, params)
@@ -102,7 +103,7 @@ let mrMigrate = {};
     }
 
 
-    mrMigrate.template[DB] = {
+    _.template[DB] = {
         name : null,
         comment : '',
         tables : {},
@@ -112,17 +113,17 @@ let mrMigrate = {};
         },
         addTable : function(name, params)
         {
-            mrMigrate.create.table(this, name, params);
+            _.create.table(this, name, params);
 
             return this;
         },
         createTable : function(name, params)
         {
-            return mrMigrate.create.table(this, name, params);
+            return _.create.table(this, name, params);
         }
     };
 
-    mrMigrate.template[TABLE] = {
+    _.template[TABLE] = {
         name : null,
         comment : '',
         fields : {},
@@ -132,13 +133,13 @@ let mrMigrate = {};
         },
         addField : function(name, params)
         {
-            mrMigrate.create.field(this, name, params);
+            _.create.field(this, name, params);
 
             return this;
         }
     };
 
-    mrMigrate.template[FIELD] = {
+    _.template[FIELD] = {
         name : null,
         comment : '',
         type : null,
