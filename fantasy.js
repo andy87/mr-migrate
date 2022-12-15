@@ -1,12 +1,11 @@
-
 let mrMigrate = {};
 
 (function()
 {
     const
-        _DB = 'db',
-        _TABLE = 'table',
-        _FIELD = 'field',
+        DB = 'db',
+        TABLE = 'table',
+        FIELD = 'field',
 
         TYPE_PRIMARY_KEY = '_primaryKey',
         TYPE_CREATED = '_created',
@@ -17,9 +16,11 @@ let mrMigrate = {};
         TYPE_STRING = 'string';
 
 
-    let _self;
+    mrMigrate = {
 
-    mrMigrate = _self = {
+        DB : DB,
+        TABLE : TABLE,
+        FIELD : FIELD,
 
         TYPE_PRIMARY_KEY : TYPE_PRIMARY_KEY,
         TYPE_CREATED : TYPE_CREATED,
@@ -29,13 +30,18 @@ let mrMigrate = {};
         TYPE_INT : TYPE_INT,
         TYPE_STRING : TYPE_STRING,
 
-        db: {},
+        db: {
+            get : function (name)
+            {
+                return this[name] ?? null;
+            }
+        },
 
         schema: {
             TYPE_PRIMARY_KEY : {
                 name : "id",
                 comment : "айди",
-                type : _self.TYPE_INT,
+                type : mrMigrate.TYPE_INT,
                 autoincrement : true,
                 nullable : false
             },
@@ -55,90 +61,95 @@ let mrMigrate = {};
             }
         },
 
-        template: {
-            _DB : {
-                name : null,
-                comment : '',
-                tables : {},
-                getTable :  function(name)
-                {
-                    return this.tables[name];
-                },
-                addTable : function(name, params)
-                {
-                    mrMigrate.add.table(this, name, params);
-
-                    return this;
-                },
-                createTable : function(name, params)
-                {
-                    return mrMigrate.add.table(this, name, params);
-                }
-            },
-            _TABLE : {
-                name : null,
-                comment : '',
-                fields : {},
-                getField : function(name)
-                {
-                    return this.fields[name];
-                },
-                addField : function(name, params)
-                {
-                    mrMigrate.add.field(this, name, params);
-
-                    return this;
-                }
-            },
-            _FIELD: {
-                name : null,
-                comment : '',
-                type : null,
-                autoincrement : null,
-                nullable : null,
-                'default' : null,
-                length : {
-                    min : null,
-                    fix : null,
-                    max : null
-                }
-            }
-        },
-
         create:
-        {
-            _upgrade: function (data, name, params)
             {
-                data['name'] = name;
+                _upgrade: function (type, name, params)
+                {
+                    let template = mrMigrate.template[type];
 
-                for (let key in params) {
-                    data[key] = params[key];
-                }
+                    template['name'] = name;
 
-                return data;
+                    for (let key in params) {
+                        template[key] = params[key];
+                    }
+
+                    return template;
+                },
+
+                db: function (name, params)
+                {
+                    mrMigrate.db[name] = this._upgrade( DB, name, params );
+
+                    return mrMigrate.db[name];
+                },
+
+                table: function (db, name, params)
+                {
+                    db.tables[name] = this._upgrade( TABLE, name, params );
+
+                    return db.tables[name];
+                },
+
+                field: function (table, name, params)
+                {
+                    table.fields[name] = this._upgrade( FIELD, name, params )
+
+                    return table.fields[name];
+                },
             },
 
-            db: function (name, params)
-            {
-                _self.db[name] = _self.add._upgrade( _self.template[_DB], name, params );
-
-                return _self.db[name];
-            },
-
-            table: function (db, name, params)
-            {
-                db.tables[name] = _self.add._upgrade( _self.template[_TABLE], name, params );
-
-                return db.tables[name];
-            },
-
-            field: function (table, name, params)
-            {
-                table.fields[name] = _self.add._upgrade( _self.template[_FIELD], name, params )
-
-                return table.fields[name];
-            },
-        }
+        template : {}
     }
+
+
+    mrMigrate.template[DB] = {
+        name : null,
+        comment : '',
+        tables : {},
+        getTable :  function(name)
+        {
+            return this.tables[name];
+        },
+        addTable : function(name, params)
+        {
+            mrMigrate.create.table(this, name, params);
+
+            return this;
+        },
+        createTable : function(name, params)
+        {
+            return mrMigrate.create.table(this, name, params);
+        }
+    };
+
+    mrMigrate.template[TABLE] = {
+        name : null,
+        comment : '',
+        fields : {},
+        getField : function(name)
+        {
+            return this.fields[name];
+        },
+        addField : function(name, params)
+        {
+            mrMigrate.create.field(this, name, params);
+
+            return this;
+        }
+    };
+
+    mrMigrate.template[FIELD] = {
+        name : null,
+        comment : '',
+        type : null,
+        autoincrement : null,
+        nullable : null,
+        'default' : null,
+        length : {
+            min : null,
+            fix : null,
+            max : null
+        }
+    };
 
 })();
