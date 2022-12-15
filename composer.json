@@ -1,0 +1,33 @@
+{
+  "name": "andy87/mr-migrate",
+  "type": "library",
+  "description": "plugin ",
+  "keywords": [
+    "service",
+    "migrate",
+    "generator"
+  ],
+  "homepage": "https://www.andy87.ru",
+  "license": "BSD-3-Clause",
+  "authors": [
+    {
+      "name": "Kidin Andrey",
+      "email": "mail@andy87.ru",
+      "homepage": "https://andy87.ru",
+      "role": "Author"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/andy87/mr-migrate/issues?state=open",
+    "source": "https://github.com/andy87/mr-migrate"
+  },
+  "require": {
+    "php": ">=8.0.0"
+  },
+  "require-dev": {},
+  "autoload": {
+    "psr-4": {
+      "Mr_Migrate\\": "src"
+    }
+  }
+}
