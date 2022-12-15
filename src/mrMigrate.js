@@ -1,6 +1,6 @@
+"use strict";
 /**
  * @author Kidin and_y87 Andrey
- *
  */
 
 window.mrMigrate = {};
