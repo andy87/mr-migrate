@@ -19,7 +19,10 @@ let mrMigrate = {};
         TYPE_DATE = 'date',
         TYPE_DATETIME = 'date_time',
         TYPE_INT = 'int',
-        TYPE_STRING = 'string';
+        TYPE_STRING = 'string',
+
+        EVENT_BEFORE_ADD = 'event_after_add',
+        EVENT_AFTER_ADD = 'event_after_add';
 
 
     let _ = mrMigrate = {
@@ -48,7 +51,7 @@ let mrMigrate = {};
 
         template : {},
         schema : {},
-        callBack : {}
+        events : {}
     };
 
 
@@ -90,7 +93,22 @@ let mrMigrate = {};
 
     // Templates
 
-    _.template[DB]  = function(name, params){
+    let triggerPrototype = function()
+    {
+        let self = this;
+
+        let TYPE = '';
+
+        this.trigger = function(event){
+            return _.events[TYPE][event](self);
+        }
+    }
+
+    _.template[DB]  = function(name, params)
+    {
+        this.prototype = triggerPrototype.prototype;
+        let TYPE = DB;
+
         this.name = name;
         this.comment = '';
         this.tables = {};
@@ -114,7 +132,12 @@ let mrMigrate = {};
         return _upgrade(this, params);
     };
 
-    _.template[TABLE] = function(name, params){
+    _.template[TABLE] = function(name, params)
+    {
+        this.prototype = triggerPrototype.prototype;
+        let TYPE = TABLE;
+
+        this.db_name = '';
         this.name = name;
         this.comment = '';
         this.fields = {};
@@ -137,7 +160,12 @@ let mrMigrate = {};
         return _upgrade(this, params);
     };
 
-    _.template[FIELD] = function(name, type, params){
+    _.template[FIELD] = function(name, type, params)
+    {
+        this.prototype = triggerPrototype.prototype;
+        let TYPE = FIELD;
+
+        this.table_name = '';
         this.name = name;
         this.comment = '';
         this.type = type;
@@ -156,17 +184,24 @@ let mrMigrate = {};
 
     // CallBack's
 
-    _.callBack[DB] = {
-        beforeAdd : function (name, params){},
-        afterAdd : function (db){},
+    _.events[DB][EVENT_BEFORE_ADD] = function (db) {
+        return db;
     }
-    _.callBack[TABLE] = {
-        beforeAdd : function (db, name, params){},
-        afterAdd : function (db, table){},
+    _.events[DB][EVENT_AFTER_ADD] = function (db){
+        return db;
     }
-    _.callBack[FIELD] = {
-        beforeAdd : function (table, name, params){},
-        afterAdd : function (table, field){},
+    _.events[TABLE][EVENT_BEFORE_ADD] = function (table){
+        return table;
+    }
+    _.events[TABLE][EVENT_AFTER_ADD] = function (table){
+        return table;
+    }
+
+    _.events[FIELD][EVENT_BEFORE_ADD] =  function (field){
+        return field;
+    }
+    _.events[FIELD][EVENT_AFTER_ADD] = function (field){
+        return field;
     }
 
 
@@ -175,34 +210,29 @@ let mrMigrate = {};
     _.create = {
         db: function (name, params)
         {
-            _.get.callBack(DB)['beforeAdd'](name, params);
+            _.db[name] = new _.template[DB](name, params).trigger(EVENT_BEFORE_ADD);
 
-            _.db[name] = new _.template[DB](name, params);
-
-            _.get.callBack(DB)['afterAdd'](_.db[name]);
-
-            return _.db[name];
+            return _.db[name].trigger(EVENT_AFTER_ADD);
         },
+
         table: function (db, name, params)
         {
-            _.get.callBack(TABLE)['beforeAdd'](db, name, params);
+            params['db_name'] = db.name;
 
-            db.tables[name] = new _.template[TABLE](name, params );
+            db.tables[name] = new _.template[TABLE](name, params ).trigger(EVENT_BEFORE_ADD);
 
-            _.get.callBack(TABLE)['afterAdd'](db, db.tables[name]);
-
-            return db.tables[name];
+            return db.tables[name].trigger(EVENT_AFTER_ADD);
         },
+
         field: function (table, name, type, params )
         {
-            _.get.callBack(FIELD)['beforeAdd'](table, name, type, params);
+            params['table_name'] = table.name;
 
-            table.fields[name] = new _.template[FIELD](name, type, params );
+            table.fields[name] = new _.template[FIELD](name, type, params ).trigger(EVENT_BEFORE_ADD);
 
-            _.get.callBack(FIELD)['afterAdd'](table, table.fields[name]);
+            table.fields[name].trigger(EVENT_AFTER_ADD);
 
             return table;
-        },
+        }
     };
-
 })();
