@@ -35,15 +35,20 @@ let mrMigrate = {};
         TYPE_INT : TYPE_INT,
         TYPE_STRING : TYPE_STRING,
 
-        db: {
-            get : function (name)
-            {
-                return this[name] ?? null;
-            }
+        db: {},
+
+        get : {
+            db : function (name){
+                return _.db[name];
+            },
+            callBack : function (type){
+                return _.callBack[type];
+            },
         },
 
         template : {},
-        schema : {}
+        schema : {},
+        callBack : {}
     };
 
 
@@ -70,6 +75,7 @@ let mrMigrate = {};
         autoincrement : false,
         nullable : true
     }
+
 
 
     function _upgrade(obj, params)
@@ -148,25 +154,55 @@ let mrMigrate = {};
     };
 
 
+    // CallBack's
+
+    _.callBack[DB] = {
+        beforeAdd : function (name, params){},
+        afterAdd : function (db){},
+    }
+    _.callBack[TABLE] = {
+        beforeAdd : function (db, name, params){},
+        afterAdd : function (db, table){},
+    }
+    _.callBack[FIELD] = {
+        beforeAdd : function (table, name, params){},
+        afterAdd : function (table, field){},
+    }
+
+
+    // Actions
 
     _.create = {
         db: function (name, params)
         {
+            _.get.callBack(DB)['beforeAdd'](name, params);
+
             _.db[name] = new _.template[DB](name, params);
+
+            _.get.callBack(DB)['afterAdd'](_.db[name]);
 
             return _.db[name];
         },
         table: function (db, name, params)
         {
+            _.get.callBack(TABLE)['beforeAdd'](db, name, params);
+
             db.tables[name] = new _.template[TABLE](name, params );
+
+            _.get.callBack(TABLE)['afterAdd'](db, db.tables[name]);
 
             return db.tables[name];
         },
-        field: function (table, name, type, params, )
+        field: function (table, name, type, params )
         {
+            _.get.callBack(FIELD)['beforeAdd'](table, name, type, params);
+
             table.fields[name] = new _.template[FIELD](name, type, params );
+
+            _.get.callBack(FIELD)['afterAdd'](table, table.fields[name]);
 
             return table;
         },
     };
+
 })();
