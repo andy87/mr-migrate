@@ -1,9 +1,10 @@
 "use strict";
+
 /**
  * @author Kidin and_y87 Andrey
  */
 
-window.mrMigrate = {};
+let mrMigrate = {};
 
 (function()
 {
@@ -20,10 +21,8 @@ window.mrMigrate = {};
         TYPE_INT = 'int',
         TYPE_STRING = 'string';
 
-    let _ = window.mrMigrate;
 
-    _ = {
-
+    let _ = mrMigrate = {
         DB : DB,
         TABLE : TABLE,
         FIELD : FIELD,
@@ -43,119 +42,131 @@ window.mrMigrate = {};
             }
         },
 
-        schema: {
-            TYPE_PRIMARY_KEY : {
-                name : "id",
-                comment : "айди",
-                type : _.TYPE_INT,
-                autoincrement : true,
-                nullable : false
-            },
-            TYPE_CREATED : {
-                name : "created_at",
-                comment : "дата создания",
-                type : _.TYPE_DATETIME,
-                autoincrement : false,
-                nullable : false
-            },
-            TYPE_UPDATED : {
-                name : "updated_at",
-                comment : "дата редактирования",
-                type : _.TYPE_DATETIME,
-                autoincrement : false,
-                nullable : true
-            }
-        },
+        template : {},
+        schema : {}
+    };
 
-        create:
-            {
-                _upgrade: function (type, name, params)
-                {
-                    let template = _.template[type];
 
-                    template['name'] = name;
+    // Schema
 
-                    for (let key in params) {
-                        template[key] = params[key];
-                    }
-
-                    return template;
-                },
-
-                db: function (name, params)
-                {
-                    _.db[name] = this._upgrade( DB, name, params );
-
-                    return _.db[name];
-                },
-
-                table: function (db, name, params)
-                {
-                    db.tables[name] = this._upgrade( TABLE, name, params );
-
-                    return db.tables[name];
-                },
-
-                field: function (table, name, params)
-                {
-                    table.fields[name] = this._upgrade( FIELD, name, params )
-
-                    return table.fields[name];
-                },
-            },
-
-        template : {}
+    _.schema[TYPE_PRIMARY_KEY] = {
+        name : "id",
+        comment : "айди",
+        type : _.TYPE_INT,
+        autoincrement : true,
+        nullable : false
+    }
+    _.schema[TYPE_CREATED] = {
+        name : "created_at",
+        comment : "дата создания",
+        type : _.TYPE_DATETIME,
+        autoincrement : false,
+        nullable : false
+    }
+    _.schema[TYPE_UPDATED] = {
+        name : "updated_at",
+        comment : "дата редактирования",
+        type : _.TYPE_DATETIME,
+        autoincrement : false,
+        nullable : true
     }
 
 
-    _.template[DB] = {
-        name : null,
-        comment : '',
-        tables : {},
-        getTable :  function(name)
+    function _upgrade(obj, params)
+    {
+        for (let key in params) {
+            obj[key] = params[key];
+        }
+
+        return obj;
+    }
+
+
+    // Templates
+
+    _.template[DB]  = function(name, params){
+        this.name = name;
+        this.comment = '';
+        this.tables = {};
+        this.getTable =  function(name)
         {
             return this.tables[name];
-        },
-        addTable : function(name, params)
+        }
+
+        this.addTable = function(name, params)
         {
             _.create.table(this, name, params);
 
             return this;
-        },
-        createTable : function(name, params)
+        }
+
+        this.createTable = function(name, params)
         {
             return _.create.table(this, name, params);
         }
+
+        return _upgrade(this, params);
     };
 
-    _.template[TABLE] = {
-        name : null,
-        comment : '',
-        fields : {},
-        getField : function(name)
+    _.template[TABLE] = function(name, params){
+        this.name = name;
+        this.comment = '';
+        this.fields = {};
+
+        this.getField = function(name)
         {
             return this.fields[name];
-        },
-        addField : function(name, params)
-        {
-            _.create.field(this, name, params);
-
-            return this;
         }
+
+        this.hesField = function (name)
+        {
+            return (this[name] !== undefined);
+        }
+
+        this.addField = function(name, params)
+        {
+            return _.create.field(this, name, params);
+        }
+
+        return _upgrade(this, params);
     };
 
-    _.template[FIELD] = {
-        name : null,
-        comment : '',
-        type : null,
-        autoincrement : null,
-        nullable : null,
-        'default' : null,
-        length : {
+    _.template[FIELD] = function(name, type, params){
+        this.name = name;
+        this.comment = '';
+        this.type = type;
+        this.autoincrement = null;
+        this.nullable = null;
+        this.default = null;
+        this.length = {
             min : null,
             fix : null,
             max : null
         }
+
+        return _upgrade(this, params);
     };
 
+
+
+    _.create = {
+        db: function (name, params)
+        {
+            _.db[name] = new _.template[DB](name, params);
+
+            return _.db[name];
+        },
+        table: function (db, name, params)
+        {
+            db.tables[name] = new _.template[TABLE](name, params );
+
+            return db.tables[name];
+        },
+        field: function (table, name, type, params, )
+        {
+            table.fields[name] = new _.template[FIELD](name, type, params );
+
+            return table;
+        },
+    };
 })();
