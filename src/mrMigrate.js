@@ -210,7 +210,7 @@ let mrMigrate = {};
     _.create = {
         db: function (name, params)
         {
-            _.db[name] = new _.template[DB](name, params).trigger(EVENT_BEFORE_ADD);
+            _.db[name] = (new _.template[DB](name, params)).trigger(EVENT_BEFORE_ADD);
 
             return _.db[name].trigger(EVENT_AFTER_ADD);
         },
@@ -219,7 +219,7 @@ let mrMigrate = {};
         {
             params['db_name'] = db.name;
 
-            db.tables[name] = new _.template[TABLE](name, params ).trigger(EVENT_BEFORE_ADD);
+            db.tables[name] = (new _.template[TABLE](name, params )).trigger(EVENT_BEFORE_ADD);
 
             return db.tables[name].trigger(EVENT_AFTER_ADD);
         },
@@ -228,7 +228,7 @@ let mrMigrate = {};
         {
             params['table_name'] = table.name;
 
-            table.fields[name] = new _.template[FIELD](name, type, params ).trigger(EVENT_BEFORE_ADD);
+            table.fields[name] = (new _.template[FIELD](name, type, params )).trigger(EVENT_BEFORE_ADD);
 
             table.fields[name].trigger(EVENT_AFTER_ADD);
 
