@@ -4,87 +4,80 @@
  * @author Kidin and_y87 Andrey
  */
 
-let mrCompare = {};
+let mrMigrate = {};
 
 (function()
 {
     const
-        STAT = 'stat',
-        PRODUCT = 'product',
+        DB = 'db',
+        TABLE = 'table',
+        FIELD = 'field',
 
-        NAME = 'name',
-        HINT = 'hint',
+        TYPE_PRIMARY_KEY = '_primaryKey',
+        TYPE_CREATED = '_created',
+        TYPE_UPDATED = '_updated',
+        TYPE_DATE = 'date',
+        TYPE_DATETIME = 'date_time',
+        TYPE_INT = 'int',
+        TYPE_STRING = 'string';
 
-        EVENT_BEFORE_ADD = 'beforeAdd',
-        EVENT_AFTER_ADD = 'afterAdd';
 
-    let _ = mrCompare = {
-        STAT : STAT,
-        PRODUCT : PRODUCT,
+    let _ = mrMigrate = {
+        DB : DB,
+        TABLE : TABLE,
+        FIELD : FIELD,
 
-        NAME : NAME,
-        HINT : HINT,
+        TYPE_PRIMARY_KEY : TYPE_PRIMARY_KEY,
+        TYPE_CREATED : TYPE_CREATED,
+        TYPE_UPDATED : TYPE_UPDATED,
+        TYPE_DATE : TYPE_DATE,
+        TYPE_DATETIME : TYPE_DATETIME,
+        TYPE_INT : TYPE_INT,
+        TYPE_STRING : TYPE_STRING,
 
-        data: {},
+        db: {},
+
+        get : {
+            db : function (name){
+                return _.db[name];
+            },
+            callBack : function (type){
+                return _.callBack[type];
+            },
+        },
 
         template : {},
-        
-        add : {},
-        
-        events : {}
-    };
-
-    _.data[STAT] = {};
-    _.data[PRODUCT] = {};
-
-
-    // Templates
-
-    _.template[STAT]  = function(){
-        
-        let self = this;
-        
-        this.name = '';
-        this.hint = null;
-
-        this.trigger = function ( event ) {
-            return _.events[STAT][ event ](self);
-        }
-        
-        return this;
-    };
-
-    _.template[PRODUCT] = function(){
-        this.name = '';
-        this.url = '';
-        this.stats = null;
-        
-        this.trigger = function ( event ) {
-            return _.events[PRODUCT][ event ](self);
-        }
-        
-        return this;
+        schema : {},
+        callBack : {}
     };
 
 
-    // CallBack's
+    // Schema
 
-    _.events[STAT][EVENT_BEFORE_ADD] = function (id, data){
-        return data;
-    };
-    _.events[STAT][EVENT_AFTER_ADD] = function (data){
-        return data;
-    };
+    _.schema[TYPE_PRIMARY_KEY] = {
+        name : "id",
+        comment : "айди",
+        type : _.TYPE_INT,
+        autoincrement : true,
+        nullable : false
+    }
+    _.schema[TYPE_CREATED] = {
+        name : "created_at",
+        comment : "дата создания",
+        type : _.TYPE_DATETIME,
+        autoincrement : false,
+        nullable : false
+    }
+    _.schema[TYPE_UPDATED] = {
+        name : "updated_at",
+        comment : "дата редактирования",
+        type : _.TYPE_DATETIME,
+        autoincrement : false,
+        nullable : true
+    }
 
-    _.events[PRODUCT][EVENT_BEFORE_ADD] = function (id, data){
-        return data;
-    };
-    _.events[PRODUCT][EVENT_AFTER_ADD] = function (data){
-        return data;
-    };
 
 
-    // Actions
     function _upgrade(obj, params)
     {
         for (let key in params) {
@@ -95,35 +88,121 @@ let mrCompare = {};
     }
 
 
-    _.add[STAT] = function (id, name, hint)
-    {
-        let stat = _upgrade( new _.template[STAT](), {
-            name : name,
-            hint : hint ?? null,
-        });
-        
-        _.data[STAT][id] = stat.trigger(EVENT_BEFORE_ADD);
-        
-        return _.data[STAT][id].trigger(EVENT_AFTER_ADD);
-    }
+    // Templates
 
-    _.add[PRODUCT] = function (id, name, url, stats)
-    {
-        stats = stats ?? {};
-
-        let product = _upgrade( new _.template[PRODUCT](), {
-            name : name,
-            url : url,
-            stats : stats
-        });
-
-        _.data[PRODUCT][id] = product.trigger(EVENT_BEFORE_ADD);
-
-        for( let stat_id in stats ) {
-            _.add[STAT]( stat_id, stats[stat_id][NAME], stats[stat_id][HINT] ?? null );
+    _.template[DB]  = function(name, params){
+        this.name = name;
+        this.comment = '';
+        this.tables = {};
+        this.getTable =  function(name)
+        {
+            return this.tables[name];
         }
 
-        return _.data[PRODUCT][id].trigger(EVENT_AFTER_ADD);
+        this.addTable = function(name, params)
+        {
+            _.create.table(this, name, params);
+
+            return this;
+        }
+
+        this.createTable = function(name, params)
+        {
+            return _.create.table(this, name, params);
+        }
+
+        return _upgrade(this, params);
+    };
+
+    _.template[TABLE] = function(name, params){
+        this.name = name;
+        this.comment = '';
+        this.fields = {};
+
+        this.getField = function(name)
+        {
+            return this.fields[name];
+        }
+
+        this.hesField = function (name)
+        {
+            return (this[name] !== undefined);
+        }
+
+        this.addField = function(name, params)
+        {
+            return _.create.field(this, name, params);
+        }
+
+        return _upgrade(this, params);
+    };
+
+    _.template[FIELD] = function(name, type, params){
+        this.name = name;
+        this.comment = '';
+        this.type = type;
+        this.autoincrement = null;
+        this.nullable = null;
+        this.default = null;
+        this.length = {
+            min : null,
+            fix : null,
+            max : null
+        }
+
+        return _upgrade(this, params);
+    };
+
+
+    // CallBack's
+
+    _.callBack[DB] = {
+        beforeAdd : function (name, params){},
+        afterAdd : function (db){},
     }
+    _.callBack[TABLE] = {
+        beforeAdd : function (db, name, params){},
+        afterAdd : function (db, table){},
+    }
+    _.callBack[FIELD] = {
+        beforeAdd : function (table, name, params){},
+        afterAdd : function (table, field){},
+    }
+
+
+    // Actions
+
+    _.create = {
+        db: function (name, params)
+        {
+            _.get.callBack(DB)['beforeAdd'](name, params);
+
+            _.db[name] = new _.template[DB](name, params);
+
+            _.get.callBack(DB)['afterAdd'](_.db[name]);
+
+            return _.db[name];
+        },
+        table: function (db, name, params)
+        {
+            _.get.callBack(TABLE)['beforeAdd'](db, name, params);
+
+            db.tables[name] = new _.template[TABLE](name, params );
+
+            _.get.callBack(TABLE)['afterAdd'](db, db.tables[name]);
+
+            return db.tables[name];
+        },
+        field: function (table, name, type, params )
+        {
+            _.get.callBack(FIELD)['beforeAdd'](table, name, type, params);
+
+            table.fields[name] = new _.template[FIELD](name, type, params );
+
+            _.get.callBack(FIELD)['afterAdd'](table, table.fields[name]);
+
+            return table;
+        },
+    };
 
 })();
