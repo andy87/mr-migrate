@@ -93,40 +93,41 @@ let mrMigrate = {};
 
     // Templates
 
-    let triggerPrototype = function()
+    let modelPrototype = function()
     {
-        let self = this;
-
-        let TYPE = '';
+        let _self = this;
+        this.TYPE;
 
         this.trigger = function(event){
-            return _.events[TYPE][event](self);
+            return _.events[_self.TYPE][event](_self);
         }
     }
 
     _.template[DB]  = function(name, params)
     {
-        this.prototype = triggerPrototype.prototype;
-        let TYPE = DB;
+        modelPrototype.call(this);
+        this.TYPE = DB;
+
+        let _self = this;
 
         this.name = name;
         this.comment = '';
         this.tables = {};
         this.getTable =  function(name)
         {
-            return this.tables[name];
+            return _self.tables[name];
         }
 
         this.addTable = function(name, params)
         {
-            _.create.table(this, name, params);
+            _.create.table(_self, name, params);
 
-            return this;
+            return _self;
         }
 
         this.createTable = function(name, params)
         {
-            return _.create.table(this, name, params);
+            return _.create.table(_self, name, params);
         }
 
         return _upgrade(this, params);
@@ -134,12 +135,12 @@ let mrMigrate = {};
 
     _.template[TABLE] = function(name, params)
     {
-        this.prototype = triggerPrototype.prototype;
-        let TYPE = TABLE;
+        modelPrototype.call(this);
+        this.TYPE = TABLE;
 
-        this.db_name = '';
         this.name = name;
-        this.comment = '';
+        this.db_name;
+        this.comment = null;
         this.fields = {};
 
         this.getField = function(name)
@@ -162,8 +163,8 @@ let mrMigrate = {};
 
     _.template[FIELD] = function(name, type, params)
     {
-        this.prototype = triggerPrototype.prototype;
-        let TYPE = FIELD;
+        modelPrototype.call(this);
+        this.TYPE = FIELD;
 
         this.table_name = '';
         this.name = name;
@@ -184,12 +185,15 @@ let mrMigrate = {};
 
     // CallBack's
 
+    _.events[DB] = {};
     _.events[DB][EVENT_BEFORE_ADD] = function (db) {
         return db;
     }
     _.events[DB][EVENT_AFTER_ADD] = function (db){
         return db;
     }
+
+    _.events[TABLE] = {};
     _.events[TABLE][EVENT_BEFORE_ADD] = function (table){
         return table;
     }
@@ -197,6 +201,7 @@ let mrMigrate = {};
         return table;
     }
 
+    _.events[FIELD] = {};
     _.events[FIELD][EVENT_BEFORE_ADD] =  function (field){
         return field;
     }
@@ -217,6 +222,8 @@ let mrMigrate = {};
 
         table: function (db, name, params)
         {
+            params = params ?? {};
+
             params['db_name'] = db.name;
 
             db.tables[name] = (new _.template[TABLE](name, params )).trigger(EVENT_BEFORE_ADD);
@@ -226,6 +233,8 @@ let mrMigrate = {};
 
         field: function (table, name, type, params )
         {
+            params = params ?? {};
+
             params['table_name'] = table.name;
 
             table.fields[name] = (new _.template[FIELD](name, type, params )).trigger(EVENT_BEFORE_ADD);

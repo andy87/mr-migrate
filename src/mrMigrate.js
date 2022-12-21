@@ -93,21 +93,22 @@ let mrMigrate = {};
 
     // Templates
 
-    let triggerPrototype = function()
+    let modelPrototype = function()
     {
-        let self = this;
+        let _self = this;
+        this.TYPE;
 
-        let TYPE = '';
+        this.name;
 
         this.trigger = function(event){
-            return _.events[TYPE][event](self);
+            return _.events[_self.TYPE][event](_self);
         }
     }
 
     _.template[DB]  = function(name, params)
     {
-        this.prototype = triggerPrototype.prototype;
-        let TYPE = DB;
+        modelPrototype.call(this);
+        this.TYPE = DB;
 
         this.name = name;
         this.comment = '';
@@ -134,8 +135,8 @@ let mrMigrate = {};
 
     _.template[TABLE] = function(name, params)
     {
-        this.prototype = triggerPrototype.prototype;
-        let TYPE = TABLE;
+        modelPrototype.call(this);
+        this.TYPE = TABLE;
 
         this.db_name = '';
         this.name = name;
@@ -162,8 +163,8 @@ let mrMigrate = {};
 
     _.template[FIELD] = function(name, type, params)
     {
-        this.prototype = triggerPrototype.prototype;
-        let TYPE = FIELD;
+        modelPrototype.call(this);
+        this.TYPE = FIELD;
 
         this.table_name = '';
         this.name = name;
@@ -182,7 +183,7 @@ let mrMigrate = {};
     };
 
 
-    // CallBack's
+    // Events
 
     _.events[DB][EVENT_BEFORE_ADD] = function (db) {
         return db;

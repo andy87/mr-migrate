@@ -1,66 +1,22 @@
 
-window.addEventListener('load', function ()
-{
+window.addEventListener('load', function (){
+
     console.log('autotests `mrMigrate`');
 
+    mrMigrate.create.db('database');
 
-    let tester = {
-        steps : [],
-        result : function(func, result)
-        {
-            let step = {};
+    mrMigrate.db.database.addTable('table_1');
 
-            step[func] = result;
+    mrMigrate.get.db('database').createTable('table_1').addField('Field_1--table_1', mrMigrate.TYPE_STRING);
+    mrMigrate.get.db('database').getTable('table_1').addField('Field_2--table_1', mrMigrate.TYPE_STRING);
 
-            this.steps.push(step)
+    let database = mrMigrate.get.db('database');
 
-            return result;
-        },
-        isset : function (item)
-        {
-            let result = ( !isNaN(item) && item !== undefined );
+    database.createTable('table_2').addField('Field_3--table_2', mrMigrate.TYPE_STRING);
 
-            return this.result( 'isset', result);
-        },
-        isEqualObject : function (a, b)
-        {
-            let result = ( this.isset(a) && this.isset(b) );
+    let table = database.getTable('table_2');
 
-            if ( result && this.isObject(a) && this.isObject(b))
-            {
-                result = (JSON.stringify(a) === JSON.stringify(b));
-            }
+    table.addField('Field_4--table_2', mrMigrate.TYPE_STRING);
 
-            return this.result( 'isEqualObject', result);
-        },
-        isEqualArray : function (a, b)
-        {
-            let result = ( this.isset(a) && this.isset(b) );
-
-            if ( result && this.isArray(a) && this.isArray(b) )
-            {
-                result = (JSON.stringify(a) === JSON.stringify(b));
-            }
-
-            return this.result( 'isEqualArray', result);
-        },
-        instanceOfObject : function (obj)
-        {
-            let result = obj instanceof Object;
-
-            return this.result( 'instanceOfObject', result );
-        },
-        isObject : function (object)
-        {
-            let result = ( this.instanceOfObject(object) && !Array.isArray(object));
-
-            return this.result( 'isObject', result );
-        },
-        isArray : function (array)
-        {
-            let result = ( this.instanceOfObject(array) && Array.isArray(array));
-
-            return this.result( 'isArray', result );
-        }
-    }
-})
+    console.log(mrMigrate.db);
+});
