@@ -113,20 +113,18 @@ let mrMigrate = {};
         this.name = name;
         this.comment = '';
         this.tables = {};
-        this.getTable =  function(name)
-        {
+
+        this.getTable =  function(name) {
             return this.tables[name];
         }
 
-        this.addTable = function(name, params)
-        {
+        this.addTable = function(name, params) {
             _.create.table(this, name, params);
 
             return this;
         }
 
-        this.createTable = function(name, params)
-        {
+        this.createTable = function(name, params) {
             return _.create.table(this, name, params);
         }
 
@@ -143,18 +141,15 @@ let mrMigrate = {};
         this.comment = '';
         this.fields = {};
 
-        this.getField = function(name)
-        {
+        this.getField = function(name) {
             return this.fields[name];
         }
 
-        this.hesField = function (name)
-        {
+        this.hesField = function (name) {
             return (this[name] !== undefined);
         }
 
-        this.addField = function(name, params)
-        {
+        this.addField = function(name, params) {
             return _.create.field(this, name, params);
         }
 
